@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+
+# env
+.env
+.env.*
+*.pem
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# general build/cache
+node_modules/
+coverage/
+dist/
+build/
+out/
+cache/
+artifacts/
+
+# next
+.next/
+web/node_modules/
+web/.next/
+web/out/
+web/build/
+
+# foundry
+foundry/cache/
+foundry/out/
+foundry/broadcast/
+foundry/lib/

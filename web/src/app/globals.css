@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f1efe8;
+  --foreground: #0f172a;
+  --card: rgba(255, 255, 255, 0.78);
+  --card-dark: rgba(5, 11, 20, 0.88);
+  --accent: #c7632b;
+  --accent-strong: #8c2f12;
+  --muted: #64748b;
+  --border: rgba(15, 23, 42, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-ibm-plex-sans);
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-ibm-plex-sans), sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.nav-link {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.65rem 0.9rem;
+  color: white;
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.nav-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.panel {
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow:
+    0 20px 50px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.panel-dark {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--card-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.field {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.85rem 1rem;
+  outline: none;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.field:focus {
+  border-color: rgba(199, 99, 43, 0.45);
+  box-shadow: 0 0 0 3px rgba(199, 99, 43, 0.14);
+}
+
+.button-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+  color: white;
+  border: 1px solid rgba(140, 47, 18, 0.45);
+  transition:
+    transform 140ms ease,
+    opacity 140ms ease;
+}
+
+.button-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button-secondary {
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--foreground);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.button-primary:disabled,
+.button-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.25rem 0.6rem;
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-dot {
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 9999px;
+}
+
+.page-copy {
+  max-width: 44rem;
+}
+
+.preformatted {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

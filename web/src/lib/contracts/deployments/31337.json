@@ -1,0 +1,9 @@
+{
+  "chainId": 31337,
+  "contractName": "MscMarketV1",
+  "proxyAddress": "0xYourProxyAddress",
+  "implementationAddress": "0xYourImplementationAddress",
+  "adminAddress": "0xYourAdminAddress",
+  "feeBps": 250,
+  "deployedAtBlock": 12345
+}
