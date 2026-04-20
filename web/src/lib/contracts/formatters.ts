@@ -13,6 +13,15 @@ export function formatAddress(address?: string | null) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+export function formatFileName(filePath?: string | null) {
+  if (!filePath) {
+    return "--";
+  }
+
+  const normalized = filePath.replaceAll("\\", "/");
+  return normalized.split("/").filter(Boolean).pop() ?? filePath;
+}
+
 export function formatTimestamp(value?: bigint | number | null) {
   if (value === null || value === undefined) {
     return "--";
@@ -20,6 +29,35 @@ export function formatTimestamp(value?: bigint | number | null) {
 
   const timestamp = typeof value === "bigint" ? Number(value) : value;
   return new Date(timestamp * 1000).toLocaleString();
+}
+
+export function formatTimestampCompact(value?: bigint | number | null) {
+  if (value === null || value === undefined) {
+    return "--";
+  }
+
+  const timestamp = typeof value === "bigint" ? Number(value) : value;
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(timestamp * 1000));
+}
+
+export function formatIsoToCompact(value?: string | null) {
+  if (!value) {
+    return "--";
+  }
+
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(value));
 }
 
 export function formatWei(value?: bigint | null) {

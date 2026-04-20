@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { SectionCard } from "@/components/shared/section-card";
 import { SignedListingCard } from "@/components/market/signed-listing-card";
+import { StatCard } from "@/components/shared/stat-card";
+import { StatusBanner } from "@/components/shared/status-banner";
+import { useMarketConfig } from "@/hooks/use-market-config";
 import { useSignListing } from "@/hooks/use-sign-listing";
+import { formatAddress } from "@/lib/contracts/formatters";
 import type { ListingFormValues } from "@/lib/contracts/types";
 
 type ListingFormProps = {
@@ -16,13 +20,39 @@ export function ListingForm({
   title = "Create and sign a listing",
   description = "This signs the exact EIP-712 payload expected by the proxy contract. The generated JSON can be copied into the marketplace page and executed by a buyer.",
 }: ListingFormProps) {
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
+  const { chain, marketAddress, isSupportedChain, statusMessage } = useMarketConfig();
   const { defaultValues, signListing, signedJson, errorMessage, isSigning } =
     useSignListing();
   const [values, setValues] = useState<ListingFormValues>(() => ({
     ...defaultValues,
     maker: address ?? defaultValues.maker,
   }));
+
+  const banner = useMemo(() => {
+    if (!isConnected) {
+      return {
+        tone: "warning" as const,
+        title: "Connect a seller wallet first",
+        description: "The seller flow signs typed data from the connected wallet.",
+      };
+    }
+
+    if (!isSupportedChain) {
+      return {
+        tone: "warning" as const,
+        title: "Chain or deployment not ready",
+        description: statusMessage,
+      };
+    }
+
+    return {
+      tone: "success" as const,
+      title: "Seller flow is ready",
+      description:
+        "The current chain has a synced proxy deployment and the listing will be signed against that proxy address.",
+    };
+  }, [isConnected, isSupportedChain, statusMessage]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,7 +62,48 @@ export function ListingForm({
   return (
     <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
       <SectionCard eyebrow="Seller Flow" title={title} description={description}>
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={onSubmit}>
+        <div className="space-y-5">
+          <StatusBanner
+            tone={banner.tone}
+            title={banner.title}
+            description={banner.description}
+          />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <StatCard
+              label="Connected wallet"
+              value={address ? formatAddress(address) : "Not connected"}
+              detail={
+                address
+                  ? `${address} · Used as the seller when you click “Use Connected Wallet”.`
+                  : "Used as the seller when you click “Use Connected Wallet”."
+              }
+              valueTitle={address}
+              detailTitle={address}
+              valueClassName="break-words"
+              detailClassName="break-all text-xs leading-5"
+            />
+            <StatCard
+              label="Active chain"
+              value={chain?.name ?? "Unknown / unsupported"}
+              detail="Typed-data signatures must match the current chain ID."
+              valueClassName="break-words"
+              detailClassName="text-xs leading-5"
+            />
+            <StatCard
+              label="Proxy target"
+              value={marketAddress ? formatAddress(marketAddress) : "No synced proxy address"}
+              detail={
+                marketAddress
+                  ? `${marketAddress} · The verifying contract for seller signatures.`
+                  : "The verifying contract for seller signatures."
+              }
+              valueTitle={marketAddress ?? undefined}
+              detailTitle={marketAddress ?? undefined}
+              valueClassName="break-words"
+              detailClassName="break-all text-xs leading-5"
+            />
+          </div>
+          <form className="grid gap-4 md:grid-cols-2" onSubmit={onSubmit}>
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-700">Order Number</span>
             <input
@@ -96,14 +167,14 @@ export function ListingForm({
           <div className="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
             <button
               type="submit"
-              className="button-primary rounded-full px-5 py-3 font-medium"
-              disabled={isSigning}
+              className="button-contained rounded-full px-5 py-3 font-medium"
+              disabled={isSigning || !isSupportedChain || !isConnected}
             >
               {isSigning ? "Signing..." : "Sign Listing"}
             </button>
             <button
               type="button"
-              className="button-secondary rounded-full px-5 py-3"
+              className="button-outlined rounded-full px-5 py-3"
               disabled={!address}
               onClick={() =>
                 address &&
@@ -117,7 +188,7 @@ export function ListingForm({
             </button>
             <button
               type="button"
-              className="button-secondary rounded-full px-5 py-3"
+              className="button-text rounded-full px-4 py-3"
               onClick={() => setValues(defaultValues)}
             >
               Reset
@@ -128,7 +199,8 @@ export function ListingForm({
               {errorMessage}
             </p>
           ) : null}
-        </form>
+          </form>
+        </div>
       </SectionCard>
       <SignedListingCard signedJson={signedJson} />
     </div>

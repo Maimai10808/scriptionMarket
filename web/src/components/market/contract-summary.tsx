@@ -1,7 +1,16 @@
 "use client";
 
-import { formatAddress, formatBigInt } from "@/lib/contracts/formatters";
+import {
+  formatAddress,
+  formatBigInt,
+  formatFileName,
+  formatIsoToCompact,
+  formatTimestamp,
+  formatTimestampCompact,
+} from "@/lib/contracts/formatters";
+import { marketGeneratedAt, type MscMarketDeployment } from "@/lib/contracts/market";
 import type { MarketProtocolSummary } from "@/lib/contracts/types";
+import { StatCard } from "@/components/shared/stat-card";
 
 type ContractSummaryProps = {
   walletAddress: `0x${string}` | undefined;
@@ -9,17 +18,10 @@ type ContractSummaryProps = {
   chainName: string;
   marketAddress: `0x${string}` | null;
   summary: MarketProtocolSummary;
+  deployment: MscMarketDeployment | null;
+  supportState: "ready" | "missing-rpc" | "missing-deployment" | "unsupported-chain";
   isLoading: boolean;
 };
-
-const STAT_ITEMS = [
-  { label: "Owner", key: "owner" },
-  { label: "Admin", key: "adminAddress" },
-  { label: "Fee Bps", key: "feeBps" },
-  { label: "Version", key: "version" },
-  { label: "Buy Enabled", key: "buyEnabled" },
-  { label: "Withdraw Enabled", key: "withdrawEnabled" },
-] as const;
 
 export function ContractSummary({
   walletAddress,
@@ -27,63 +29,133 @@ export function ContractSummary({
   chainName,
   marketAddress,
   summary,
+  deployment,
+  supportState,
   isLoading,
 }: ContractSummaryProps) {
+  const readinessLabel =
+    supportState === "ready"
+      ? "Ready"
+      : supportState === "missing-rpc"
+        ? "Missing RPC"
+      : supportState === "missing-deployment"
+          ? "No Deployment"
+          : "Unsupported";
+
+  const deploymentFileName = formatFileName(deployment?.source);
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.2fr_1.8fr]">
-      <div className="rounded-3xl bg-slate-950 p-6 text-white">
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-400">
-          wallet session
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1.35fr)]">
+      <div className="rounded-[2rem] border border-white/10 bg-slate-950 p-6 text-white shadow-2xl shadow-slate-950/20">
+        <p className="font-mono text-[11px] uppercase tracking-[0.32em] text-slate-400">
+          active session
         </p>
-        <div className="mt-6 grid gap-4">
-          <div>
-            <p className="text-sm text-slate-400">Connected Wallet</p>
-            <p className="mt-1 break-all text-base font-medium">
-              {walletAddress ? formatAddress(walletAddress) : "Not connected"}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-slate-400">Network</p>
-            <p className="mt-1 text-base font-medium">
-              {chainName} ({chainId})
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-slate-400">Proxy Address</p>
-            <p className="mt-1 break-all font-mono text-xs text-slate-200">
-              {marketAddress ?? "Unavailable"}
-            </p>
-          </div>
+        <div className="mt-5 grid gap-4">
+          <StatCard
+            label="Wallet"
+            value={walletAddress ? formatAddress(walletAddress) : "Not connected"}
+            detail={walletAddress ?? "Connect a wallet to sign listings, buy, or manage protocol settings."}
+            tone="dark"
+            valueClassName="break-words"
+            detailClassName="break-all text-slate-300/80"
+          />
+          <StatCard
+            label="Chain"
+            value={`${chainName} (${chainId || "--"})`}
+            detail={`Frontend sync state: ${readinessLabel}`}
+            tone="dark"
+            valueClassName="break-words"
+          />
+          <StatCard
+            label="Proxy address"
+            value={marketAddress ? formatAddress(marketAddress) : "No synced proxy address"}
+            detail="The UI always targets the proxy, never the implementation."
+            tone="dark"
+            valueClassName="break-words text-base sm:text-lg"
+            detailClassName="text-slate-300/80"
+            valueTitle={marketAddress ?? undefined}
+          />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {STAT_ITEMS.map((item) => {
-          const value = summary[item.key];
-          const renderedValue =
-            typeof value === "boolean"
-              ? value
-                ? "Enabled"
-                : "Disabled"
-              : typeof value === "bigint"
-                ? formatBigInt(value)
-                : typeof value === "string"
-                  ? formatAddress(value)
-                  : "--";
 
-          return (
-            <article
-              key={item.key}
-              className="rounded-2xl border border-slate-200/80 bg-white/72 p-5"
-            >
-              <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-slate-500">
-                {item.label}
-              </p>
-              <p className="mt-3 text-lg font-semibold text-slate-950">
-                {isLoading ? "Loading..." : renderedValue}
-              </p>
-            </article>
-          );
-        })}
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+        <div className="grid min-w-0 gap-4">
+          <StatCard
+            label="Implementation"
+            value={
+              deployment?.implementationAddress
+                ? formatAddress(deployment.implementationAddress)
+                : "Unavailable"
+            }
+            detail={
+              deployment?.source
+                ? `${deploymentFileName} · synced from Foundry broadcast`
+                : "No deployment artifact is currently synced for this chain."
+            }
+            valueClassName="break-words text-base sm:text-lg"
+            detailClassName="break-words"
+            valueTitle={deployment?.implementationAddress ?? undefined}
+          />
+          <StatCard
+            label="Deployment time"
+            value={
+              deployment?.deploymentTimestamp
+                ? formatTimestampCompact(BigInt(deployment.deploymentTimestamp))
+                : "--"
+            }
+            detail={deployment?.deployedAt ?? "Waiting for a deployment artifact."}
+            valueClassName="break-words"
+            detailClassName="break-words"
+            valueTitle={
+              deployment?.deploymentTimestamp
+                ? formatTimestamp(BigInt(deployment.deploymentTimestamp))
+                : undefined
+            }
+          />
+          <StatCard
+            label="ABI sync"
+            value={formatIsoToCompact(marketGeneratedAt)}
+            detail="Generated contract metadata timestamp used by the frontend."
+            valueClassName="break-words"
+            valueTitle={new Date(marketGeneratedAt).toLocaleString()}
+          />
+        </div>
+
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <StatCard
+            label="Owner"
+            value={isLoading ? "Loading..." : summary.owner ? formatAddress(summary.owner) : "--"}
+            detail={summary.owner ?? "Owner not available until reads complete."}
+            valueClassName="break-words"
+            detailClassName="break-all"
+            valueTitle={summary.owner ?? undefined}
+            detailTitle={summary.owner ?? undefined}
+          />
+          <StatCard
+            label="Admin"
+            value={
+              isLoading ? "Loading..." : summary.adminAddress ? formatAddress(summary.adminAddress) : "--"
+            }
+            detail={summary.adminAddress ?? "Admin address not available until reads complete."}
+            valueClassName="break-words"
+            detailClassName="break-all"
+            valueTitle={summary.adminAddress ?? undefined}
+            detailTitle={summary.adminAddress ?? undefined}
+          />
+          <StatCard
+            label="Protocol fee"
+            value={
+              isLoading
+                ? "Loading..."
+                : summary.feeBps !== null
+                  ? `${formatBigInt(summary.feeBps)} (contract units)`
+                  : "--"
+            }
+            detail="Current contract formula is price * feeBps / 100."
+            tone="accent"
+            valueClassName="break-words"
+          />
+        </div>
       </div>
     </div>
   );

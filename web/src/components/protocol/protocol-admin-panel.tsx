@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 import { SectionCard } from "@/components/shared/section-card";
+import { StatCard } from "@/components/shared/stat-card";
+import { StatusBanner } from "@/components/shared/status-banner";
 import { TxResultCard } from "@/components/market/tx-result-card";
+import { useMarketConfig } from "@/hooks/use-market-config";
 import { useOrderStatus } from "@/hooks/use-order-status";
 import { useProtocolAdmin } from "@/hooks/use-protocol-admin";
 import { useMarketRead } from "@/hooks/use-market-read";
 import {
+  formatAddress,
   formatBigInt,
   formatWei,
   getOrderStatusLabel,
 } from "@/lib/contracts/formatters";
 
 export function ProtocolAdminPanel() {
+  const { chain, marketAddress, isSupportedChain, statusMessage } = useMarketConfig();
   const { summary } = useMarketRead();
   const admin = useProtocolAdmin();
   const [feeBps, setFeeBps] = useState(summary.feeBps?.toString() ?? "2");
@@ -35,7 +40,46 @@ export function ProtocolAdminPanel() {
           title="Read protocol state"
           description="Query order status and failed seller payouts directly from the proxy contract."
         >
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-5">
+            <StatusBanner
+              tone={isSupportedChain ? "success" : "warning"}
+              title={isSupportedChain ? "Protocol reads are live" : "Protocol read environment is incomplete"}
+              description={
+                isSupportedChain
+                  ? "This page is connected to a synced proxy deployment and can perform direct contract reads."
+                  : statusMessage
+              }
+            />
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <StatCard
+                label="Active chain"
+                value={chain?.name ?? "Unknown / unsupported"}
+                detail="Protocol reads and admin writes run against this chain."
+                valueClassName="break-words"
+                detailClassName="text-xs leading-5"
+              />
+              <StatCard
+                label="Proxy target"
+                value={marketAddress ? formatAddress(marketAddress) : "No synced proxy address"}
+                detail={
+                  marketAddress
+                    ? `${marketAddress} · The contract target for order queries and admin writes.`
+                    : "The contract target for order queries and admin writes."
+                }
+                valueTitle={marketAddress ?? undefined}
+                detailTitle={marketAddress ?? undefined}
+                valueClassName="break-words"
+                detailClassName="break-all text-xs leading-5"
+              />
+              <StatCard
+                label="Access mode"
+                value={admin.canManageProtocol ? "Admin enabled" : "Read only"}
+                detail="Owner/admin wallets can submit protocol writes from this page."
+                valueClassName="break-words"
+                detailClassName="text-xs leading-5"
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-2">
               <span className="text-sm font-medium text-slate-700">Order Seller</span>
               <input
@@ -63,9 +107,9 @@ export function ProtocolAdminPanel() {
                 placeholder="0x..."
               />
             </label>
-          </div>
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-white/80 p-4">
               <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-slate-500">
                 Order Status
               </p>
@@ -80,6 +124,7 @@ export function ProtocolAdminPanel() {
               <p className="mt-2 text-lg font-semibold text-slate-950">
                 {failureOrder !== null ? formatWei(failureOrder) : "--"}
               </p>
+            </div>
             </div>
           </div>
         </SectionCard>
@@ -111,8 +156,8 @@ export function ProtocolAdminPanel() {
             <div className="flex items-end">
               <button
                 type="button"
-                className="button-primary w-full rounded-2xl px-5 py-3"
-                disabled={!admin.canManageProtocol}
+                className="button-contained w-full rounded-2xl px-5 py-3"
+                disabled={!admin.canManageProtocol || !isSupportedChain}
                 onClick={() => admin.setFeeBps(BigInt(feeBps))}
               >
                 Update Fee Bps
@@ -144,16 +189,16 @@ export function ProtocolAdminPanel() {
             <div className="md:col-span-2 flex flex-wrap gap-3">
               <button
                 type="button"
-                className="button-primary rounded-full px-5 py-3"
-                disabled={!admin.canManageProtocol}
+                className="button-contained rounded-full px-5 py-3"
+                disabled={!admin.canManageProtocol || !isSupportedChain}
                 onClick={() => admin.setFeatureStatus(feature, featureEnabled)}
               >
                 Set Feature Status
               </button>
               <button
                 type="button"
-                className="button-secondary rounded-full px-5 py-3"
-                disabled={!admin.canManageProtocol}
+                className="button-outlined rounded-full px-5 py-3"
+                disabled={!admin.canManageProtocol || !isSupportedChain}
                 onClick={() => admin.withdraw()}
               >
                 Withdraw Protocol Balance

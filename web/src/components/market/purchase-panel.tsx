@@ -1,10 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useAccount } from "wagmi";
 import { SectionCard } from "@/components/shared/section-card";
+import { StatCard } from "@/components/shared/stat-card";
+import { StatusBanner } from "@/components/shared/status-banner";
 import { TxResultCard } from "@/components/market/tx-result-card";
+import { useMarketConfig } from "@/hooks/use-market-config";
 import { usePurchase } from "@/hooks/use-purchase";
 import {
+  formatAddress,
   formatBigInt,
   formatTimestamp,
   formatWei,
@@ -15,6 +20,8 @@ import { loadSignedListings } from "@/lib/contracts/local-listings";
 import type { SignedListing } from "@/lib/contracts/types";
 
 export function PurchasePanel() {
+  const { isConnected } = useAccount();
+  const { chain, marketAddress, isSupportedChain, statusMessage } = useMarketConfig();
   const { purchase, txHash, status, errorMessage } = usePurchase();
   const [textareaValue, setTextareaValue] = useState("");
   const [storedListings] = useState<SignedListing[]>(() => loadSignedListings());
@@ -63,6 +70,54 @@ export function PurchasePanel() {
         description="The first version keeps listing data local. You can paste JSON directly or load a signed listing saved from the seller flow."
       >
         <div className="space-y-4">
+          <StatusBanner
+            tone={
+              !isConnected ? "warning" : isSupportedChain ? "success" : "warning"
+            }
+            title={
+              !isConnected
+                ? "Connect a buyer wallet first"
+                : isSupportedChain
+                  ? "Buyer flow is ready"
+                  : "Chain or deployment not ready"
+            }
+            description={
+              !isConnected
+                ? "The purchase flow needs a connected wallet to submit the `mscPurchase` transaction."
+                : isSupportedChain
+                  ? "This wallet can submit settlement transactions against the synced proxy deployment."
+                  : statusMessage
+            }
+          />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <StatCard
+              label="Active chain"
+              value={chain?.name ?? "Unknown / unsupported"}
+              detail="The purchase wallet must stay on the same chain the seller signed for."
+              valueClassName="break-words"
+              detailClassName="text-xs leading-5"
+            />
+            <StatCard
+              label="Proxy target"
+              value={marketAddress ? formatAddress(marketAddress) : "No synced proxy address"}
+              detail={
+                marketAddress
+                  ? `${marketAddress} · The transaction is always sent to the proxy deployment.`
+                  : "The transaction is always sent to the proxy deployment."
+              }
+              valueTitle={marketAddress ?? undefined}
+              detailTitle={marketAddress ?? undefined}
+              valueClassName="break-words"
+              detailClassName="break-all text-xs leading-5"
+            />
+            <StatCard
+              label="Saved listings"
+              value={storedListings.length.toString()}
+              detail="Signed JSON orders cached in this browser for fast demos."
+              valueClassName="break-words"
+              detailClassName="text-xs leading-5"
+            />
+          </div>
           <textarea
             className="field min-h-[280px] rounded-3xl"
             placeholder="Paste signed listing JSON here..."
@@ -70,13 +125,17 @@ export function PurchasePanel() {
             onChange={(event) => setTextareaValue(event.target.value)}
           />
           <div className="flex flex-wrap gap-3">
-            <button type="button" className="button-primary rounded-full px-5 py-3" onClick={parseListing}>
+            <button
+              type="button"
+              className="button-outlined rounded-full px-5 py-3"
+              onClick={parseListing}
+            >
               Parse Listing
             </button>
             <button
               type="button"
-              className="button-secondary rounded-full px-5 py-3"
-              disabled={!parsedListing}
+              className="button-contained rounded-full px-5 py-3"
+              disabled={!parsedListing || !isConnected || !isSupportedChain}
               onClick={onBuy}
             >
               Buy Listing
@@ -118,7 +177,7 @@ export function PurchasePanel() {
                 <button
                   key={`${listing.marketStorage.maker}-${listing.marketStorage.number.toString()}`}
                   type="button"
-                  className="w-full rounded-2xl border border-slate-200 bg-white/82 p-4 text-left transition hover:border-slate-300"
+                  className="dashboard-module w-full rounded-2xl border border-slate-200 bg-white/82 p-4 text-left transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[var(--elevation-1)]"
                   onClick={() => {
                     setTextareaValue(serialized);
                     setParsedListing(listing);
@@ -131,7 +190,7 @@ export function PurchasePanel() {
                   <p className="mt-2 text-sm font-semibold text-slate-900">
                     #{listing.marketStorage.number.toString()} · {formatWei(listing.marketStorage.price)}
                   </p>
-                  <p className="mt-1 text-xs text-slate-600">
+                  <p className="mt-1 break-all text-xs text-slate-600">
                     {listing.marketStorage.maker}
                   </p>
                 </button>

@@ -707,6 +707,47 @@ export const MSC_MARKET_ABI = [
   }
 ] as const satisfies Abi;
 
+export const MSC_MARKET_GENERATED_AT = "2026-04-20T18:53:51.198Z";
+
+export const MSC_MARKET_CHAIN_REGISTRY = {
+  18686: {
+    chainId: 18686,
+    chainName: "MXC Mainnet",
+    nativeCurrency: {
+      name: "MXC",
+      symbol: "MXC",
+      decimals: 18,
+    },
+    blockExplorerUrl: "https://explorer.mxc.com",
+    rpcEnvVar: "NEXT_PUBLIC_MXC_MAIN_RPC_URL",
+    kind: "mainnet",
+  },
+  31337: {
+    chainId: 31337,
+    chainName: "Anvil Local",
+    nativeCurrency: {
+      name: "Ethereum",
+      symbol: "ETH",
+      decimals: 18,
+    },
+    blockExplorerUrl: "http://127.0.0.1:8545",
+    rpcEnvVar: "NEXT_PUBLIC_LOCAL_RPC_URL",
+    kind: "local",
+  },
+  5167003: {
+    chainId: 5167003,
+    chainName: "MXC Testnet",
+    nativeCurrency: {
+      name: "MXC",
+      symbol: "MXC",
+      decimals: 18,
+    },
+    blockExplorerUrl: "https://explorer.mxc.com",
+    rpcEnvVar: "NEXT_PUBLIC_MXC_TEST_RPC_URL",
+    kind: "testnet",
+  },
+} as const;
+
 export const MSC_MARKET_DEPLOYMENTS = {
   18686: {
     contractName: "MscMarketV1",
@@ -718,6 +759,17 @@ export const MSC_MARKET_DEPLOYMENTS = {
     deployedAt: "2023-12-29T06:51:13.000Z",
     deploymentTimestamp: 1703832673,
     source: "/Volumes/DevDisk/Dev/projects/Web/open/scriptionMarket/foundry/broadcast/DeployMscMarketV1.s.sol/18686/run-latest.json",
+  },
+  31337: {
+    contractName: "MscMarketV1",
+    chainId: 31337,
+    chainName: "Anvil Local",
+    address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512" as Address,
+    proxyAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512" as Address,
+    implementationAddress: "0x5fbdb2315678afecb367f032d93f642f64180aa3" as Address,
+    deployedAt: "+058271-08-25T14:01:19.000Z",
+    deploymentTimestamp: 1776708396079,
+    source: "/Volumes/DevDisk/Dev/projects/Web/open/scriptionMarket/foundry/broadcast/DeployMscMarketV1.s.sol/31337/run-latest.json",
   },
   5167003: {
     contractName: "MscMarketV1",
@@ -732,5 +784,12 @@ export const MSC_MARKET_DEPLOYMENTS = {
   },
 } as const;
 
+export const MSC_MARKET_DEPLOYMENT_CHAIN_IDS = Object.keys(
+  MSC_MARKET_DEPLOYMENTS,
+).map((chainId) => Number(chainId)) as Array<keyof typeof MSC_MARKET_CHAIN_REGISTRY>;
+
 export type MscMarketDeployment =
   (typeof MSC_MARKET_DEPLOYMENTS)[keyof typeof MSC_MARKET_DEPLOYMENTS];
+
+export type MscMarketChain =
+  (typeof MSC_MARKET_CHAIN_REGISTRY)[keyof typeof MSC_MARKET_CHAIN_REGISTRY];

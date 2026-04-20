@@ -1,6 +1,19 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
+type ChainRegistryEntry = {
+  chainId: number;
+  chainName: string;
+  nativeCurrency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  blockExplorerUrl: string;
+  rpcEnvVar: string;
+  kind: "local" | "testnet" | "mainnet";
+};
+
 type BroadcastTransaction = {
   contractAddress?: string;
   contractName?: string;
@@ -30,10 +43,43 @@ type DeploymentRecord = {
   source: string;
 };
 
-const CHAIN_NAMES: Record<number, string> = {
-  31337: "Anvil Local",
-  5167003: "MXC Testnet",
-  18686: "MXC Mainnet",
+const CHAIN_REGISTRY: Record<number, ChainRegistryEntry> = {
+  31337: {
+    chainId: 31337,
+    chainName: "Anvil Local",
+    nativeCurrency: {
+      name: "Ethereum",
+      symbol: "ETH",
+      decimals: 18,
+    },
+    blockExplorerUrl: "http://127.0.0.1:8545",
+    rpcEnvVar: "NEXT_PUBLIC_LOCAL_RPC_URL",
+    kind: "local",
+  },
+  5167003: {
+    chainId: 5167003,
+    chainName: "MXC Testnet",
+    nativeCurrency: {
+      name: "MXC",
+      symbol: "MXC",
+      decimals: 18,
+    },
+    blockExplorerUrl: "https://explorer.mxc.com",
+    rpcEnvVar: "NEXT_PUBLIC_MXC_TEST_RPC_URL",
+    kind: "testnet",
+  },
+  18686: {
+    chainId: 18686,
+    chainName: "MXC Mainnet",
+    nativeCurrency: {
+      name: "MXC",
+      symbol: "MXC",
+      decimals: 18,
+    },
+    blockExplorerUrl: "https://explorer.mxc.com",
+    rpcEnvVar: "NEXT_PUBLIC_MXC_MAIN_RPC_URL",
+    kind: "mainnet",
+  },
 };
 
 async function readJson<T>(filePath: string): Promise<T> {
@@ -69,7 +115,7 @@ function formatDeploymentRecord(
   return {
     contractName: "MscMarketV1",
     chainId,
-    chainName: CHAIN_NAMES[chainId] ?? `Chain ${chainId}`,
+    chainName: CHAIN_REGISTRY[chainId]?.chainName ?? `Chain ${chainId}`,
     address: proxyAddress,
     proxyAddress,
     implementationAddress: implementationTx?.contractAddress ?? null,
@@ -87,8 +133,18 @@ async function collectFoundryDeployments(repoRoot: string) {
     "DeployMscMarketV1.s.sol",
   );
 
-  const entries = await fs.readdir(deployRoot, { withFileTypes: true });
   const deployments: DeploymentRecord[] = [];
+
+  try {
+    await fs.access(deployRoot);
+  } catch {
+    console.warn(
+      `No Foundry deployment directory found at ${path.relative(repoRoot, deployRoot)}. Generating an empty deployment manifest.`,
+    );
+    return deployments;
+  }
+
+  const entries = await fs.readdir(deployRoot, { withFileTypes: true });
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
@@ -113,6 +169,23 @@ async function collectFoundryDeployments(repoRoot: string) {
 }
 
 function buildGeneratedModule(abi: unknown, deployments: DeploymentRecord[]) {
+  const chainEntries = Object.values(CHAIN_REGISTRY)
+    .map((chain) => {
+      return `  ${chain.chainId}: {
+    chainId: ${chain.chainId},
+    chainName: "${chain.chainName}",
+    nativeCurrency: {
+      name: "${chain.nativeCurrency.name}",
+      symbol: "${chain.nativeCurrency.symbol}",
+      decimals: ${chain.nativeCurrency.decimals},
+    },
+    blockExplorerUrl: "${chain.blockExplorerUrl}",
+    rpcEnvVar: "${chain.rpcEnvVar}",
+    kind: "${chain.kind}",
+  },`;
+    })
+    .join("\n");
+
   const deploymentEntries = deployments
     .map((deployment) => {
       const implementationAddress = deployment.implementationAddress
@@ -145,12 +218,25 @@ import type { Abi, Address } from "viem";
 
 export const MSC_MARKET_ABI = ${JSON.stringify(abi, null, 2)} as const satisfies Abi;
 
+export const MSC_MARKET_GENERATED_AT = "${new Date().toISOString()}";
+
+export const MSC_MARKET_CHAIN_REGISTRY = {
+${chainEntries}
+} as const;
+
 export const MSC_MARKET_DEPLOYMENTS = {
 ${deploymentEntries}
 } as const;
 
+export const MSC_MARKET_DEPLOYMENT_CHAIN_IDS = Object.keys(
+  MSC_MARKET_DEPLOYMENTS,
+).map((chainId) => Number(chainId)) as Array<keyof typeof MSC_MARKET_CHAIN_REGISTRY>;
+
 export type MscMarketDeployment =
   (typeof MSC_MARKET_DEPLOYMENTS)[keyof typeof MSC_MARKET_DEPLOYMENTS];
+
+export type MscMarketChain =
+  (typeof MSC_MARKET_CHAIN_REGISTRY)[keyof typeof MSC_MARKET_CHAIN_REGISTRY];
 `;
 }
 
@@ -169,10 +255,6 @@ async function main() {
 
   const abi = await readJson<unknown>(abiPath);
   const deployments = await collectFoundryDeployments(repoRoot);
-
-  if (deployments.length === 0) {
-    throw new Error("No Foundry deployment artifacts were found.");
-  }
 
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, buildGeneratedModule(abi, deployments), "utf8");

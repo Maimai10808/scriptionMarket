@@ -30,4 +30,5 @@ export type MarketProtocolSummary = {
   version: bigint | null;
   buyEnabled: boolean | null;
   withdrawEnabled: boolean | null;
+  domainSeparator: `0x${string}` | null;
 };

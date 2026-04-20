@@ -1,0 +1,13 @@
+{
+  "name": "scription-market-workspace",
+  "private": true,
+  "scripts": {
+    "contracts:anvil": "cd foundry && make anvil",
+    "contracts:deploy": "cd foundry && make deploy",
+    "contracts:deploy:testnet": "cd foundry && make deploy ARGS=\"--network wannsee\"",
+    "contracts:deploy:mainnet": "cd foundry && make deploy ARGS=\"--network mainnet\"",
+    "contracts:sync": "cd web && npm run sync:contracts",
+    "web:dev": "cd web && npm run dev",
+    "web:build": "cd web && npm run build"
+  }
+}

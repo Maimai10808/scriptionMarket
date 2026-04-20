@@ -2,21 +2,25 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "predev": "npm run sync:contracts",
+    "dev": "next dev --webpack",
+    "prebuild": "npm run sync:contracts",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "sync:contracts": "node --experimental-strip-types scripts/sync-contracts-to-web.ts",
     "deploy:and-sync": "cd ../foundry && make deploy"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.99.0",
+    "@rainbow-me/rainbowkit": "^2.2.10",
+    "@tanstack/react-query": "^5.99.2",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "viem": "^2.48.1",
-    "wagmi": "^3.6.3"
+    "wagmi": "^2.19.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

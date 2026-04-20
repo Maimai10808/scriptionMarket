@@ -35,7 +35,7 @@ export function SignedListingCard({ signedJson }: SignedListingCardProps) {
         </div>
         <button
           type="button"
-          className="button-secondary rounded-full px-5 py-3"
+          className="button-outlined rounded-full px-5 py-3"
           disabled={!signedJson}
           onClick={copyJson}
         >

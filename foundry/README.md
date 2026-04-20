@@ -112,6 +112,36 @@ make test
 
 Current note: in this workspace, `forge test` did not complete because Foundry crashed while attempting to install `solc 0.8.20` on the local machine. That is an environment/tooling issue rather than a documented test failure in the project source itself.
 
+## Frontend Sync
+
+This repo now treats Foundry deployment artifacts as the source of truth for frontend contract wiring.
+
+After every deploy or upgrade, the Makefile automatically syncs:
+
+- ABI
+- proxy address
+- implementation address
+- chain metadata
+- deployment timestamps
+
+into:
+
+- `../web/src/lib/contracts/generated/msc-market.ts`
+
+This happens automatically in:
+
+```bash
+make deploy
+make upgrade
+```
+
+You can also run the sync manually from the frontend:
+
+```bash
+cd ../web
+npm run sync:contracts
+```
+
 ## Local Development
 
 Start a local Anvil node:
@@ -130,6 +160,29 @@ The local deployment path uses:
 
 - RPC URL: `http://localhost:8545`
 - Default private key from the Makefile
+- automatic frontend contract sync after deployment
+
+## Quick Start
+
+From the repository root:
+
+1. Start the local chain
+
+```bash
+npm run contracts:anvil
+```
+
+2. Deploy and sync the frontend contract manifest
+
+```bash
+npm run contracts:deploy
+```
+
+3. Start the frontend
+
+```bash
+npm run web:dev
+```
 
 ## Deployment
 

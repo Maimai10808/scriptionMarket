@@ -1,17 +1,22 @@
 "use client";
 
 import { useChainId, useReadContracts } from "wagmi";
-import { getConfiguredChain } from "@/config/chains";
-import { getMarketDeployment, marketAbi } from "@/lib/contracts/market";
+import { marketAbi } from "@/lib/contracts/market";
+import { useMarketConfig } from "@/hooks/use-market-config";
 import type { MarketProtocolSummary } from "@/lib/contracts/types";
 
 export function useMarketRead() {
   const chainId = useChainId();
-  const deployment = getMarketDeployment(chainId);
-  const configuredChain = getConfiguredChain(chainId);
-  const marketAddress = deployment?.proxyAddress ?? null;
+  const {
+    chain,
+    deployment,
+    marketAddress,
+    isSupportedChain,
+    supportState,
+    statusMessage,
+  } = useMarketConfig();
 
-  const enabled = Boolean(marketAddress && configuredChain);
+  const enabled = Boolean(marketAddress && isSupportedChain);
 
   const { data, isLoading, isError, error, refetch } = useReadContracts({
     contracts: enabled
@@ -48,6 +53,11 @@ export function useMarketRead() {
             functionName: "getFeatureStatus",
             args: ["withdraw"],
           },
+          {
+            address: marketAddress!,
+            abi: marketAbi,
+            functionName: "getDomainSeparator",
+          },
         ]
       : [],
     query: {
@@ -62,11 +72,12 @@ export function useMarketRead() {
     version: (data?.[3]?.result as bigint | undefined) ?? null,
     buyEnabled: (data?.[4]?.result as boolean | undefined) ?? null,
     withdrawEnabled: (data?.[5]?.result as boolean | undefined) ?? null,
+    domainSeparator: (data?.[6]?.result as `0x${string}` | undefined) ?? null,
   };
 
   return {
     chainId,
-    chain: configuredChain,
+    chain,
     deployment,
     marketAddress,
     marketAbi,
@@ -76,5 +87,7 @@ export function useMarketRead() {
     error,
     refetch,
     isSupportedChain: enabled,
+    supportState,
+    statusMessage,
   };
 }

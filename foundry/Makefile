@@ -41,5 +41,5 @@ deploy:
 	@cd ../web && npm run sync:contracts
 
 upgrade:
-	@forge script script/UpgradeBox.s.sol:UpgradeMarket $(NETWORK_ARGS)
+	@forge script script/UpgradeMarket.s.sol:UpgradeMarket $(NETWORK_ARGS)
 	@cd ../web && npm run sync:contracts

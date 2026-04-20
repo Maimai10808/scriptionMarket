@@ -1,79 +1,61 @@
 import { defineChain } from "viem";
+import { marketChainRegistry } from "@/lib/contracts/market";
 
-function buildOptionalChain(config: {
-  id: number;
-  name: string;
-  rpcUrl: string | undefined;
-  blockExplorer: string;
-}) {
-  if (!config.rpcUrl) {
+function resolveRpcUrl(chainId: number) {
+  if (chainId === 31337) {
+    return process.env.NEXT_PUBLIC_LOCAL_RPC_URL ?? "http://127.0.0.1:8545";
+  }
+
+  if (chainId === 5167003) {
+    return process.env.NEXT_PUBLIC_MXC_TEST_RPC_URL;
+  }
+
+  if (chainId === 18686) {
+    return process.env.NEXT_PUBLIC_MXC_MAIN_RPC_URL;
+  }
+
+  return undefined;
+}
+
+function buildConfiguredChain(chainId: number) {
+  const config = marketChainRegistry[chainId as keyof typeof marketChainRegistry];
+  const rpcUrl = resolveRpcUrl(chainId);
+
+  if (!config || !rpcUrl) {
     return null;
   }
 
   return defineChain({
-    id: config.id,
-    name: config.name,
-    nativeCurrency: {
-      name: "MXC",
-      symbol: "MXC",
-      decimals: 18,
-    },
+    id: config.chainId,
+    name: config.chainName,
+    nativeCurrency: config.nativeCurrency,
     rpcUrls: {
       default: {
-        http: [config.rpcUrl],
+        http: [rpcUrl],
       },
     },
     blockExplorers: {
       default: {
-        name: `${config.name} Explorer`,
-        url: config.blockExplorer,
+        name: `${config.chainName} Explorer`,
+        url: config.blockExplorerUrl,
       },
     },
   });
 }
 
-export const anvilChain = defineChain({
-  id: 31337,
-  name: "Anvil Local",
-  nativeCurrency: {
-    name: "Ethereum",
-    symbol: "ETH",
-    decimals: 18,
-  },
-  rpcUrls: {
-    default: {
-      http: [process.env.NEXT_PUBLIC_LOCAL_RPC_URL ?? "http://127.0.0.1:8545"],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: "Localhost",
-      url: "http://127.0.0.1:8545",
-    },
-  },
-});
-
-export const optionalChains = [
-  buildOptionalChain({
-    id: 5167003,
-    name: "MXC Testnet",
-    rpcUrl: process.env.NEXT_PUBLIC_MXC_TEST_RPC_URL,
-    blockExplorer: "https://explorer.mxc.com",
-  }),
-  buildOptionalChain({
-    id: 18686,
-    name: "MXC Mainnet",
-    rpcUrl: process.env.NEXT_PUBLIC_MXC_MAIN_RPC_URL,
-    blockExplorer: "https://explorer.mxc.com",
-  }),
-].filter((chain): chain is NonNullable<typeof chain> => chain !== null);
-
-export const configuredChains = [anvilChain, ...optionalChains] as const;
+export const knownMarketChains = Object.values(marketChainRegistry);
+export const configuredChains = knownMarketChains
+  .map((chain) => buildConfiguredChain(chain.chainId))
+  .filter((chain): chain is NonNullable<typeof chain> => chain !== null);
 
 export const configuredChainIds = configuredChains.map((chain) => chain.id);
 
-export const chainMetadataById = new Map(
+export const chainMetadataById = new Map<number, (typeof configuredChains)[number]>(
   configuredChains.map((chain) => [chain.id, chain] as const),
+);
+
+export const knownChainMetadataById = new Map<number, (typeof knownMarketChains)[number]>(
+  knownMarketChains.map((chain) => [chain.chainId, chain] as const),
 );
 
 export function getConfiguredChain(chainId?: number | null) {
@@ -82,4 +64,12 @@ export function getConfiguredChain(chainId?: number | null) {
   }
 
   return chainMetadataById.get(chainId) ?? null;
+}
+
+export function getKnownChain(chainId?: number | null) {
+  if (!chainId) {
+    return null;
+  }
+
+  return knownChainMetadataById.get(chainId) ?? null;
 }
