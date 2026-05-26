@@ -37,11 +37,11 @@ export type PendingListingDraft = {
 export type PendingPurchase =
   | {
       type: "single";
-      listings: [SignedListing];
+      listings: [SignedListing & { signature: Hex; status: "signed" }];
     }
   | {
       type: "batch";
-      listings: SignedListing[];
+      listings: Array<SignedListing & { signature: Hex; status: "signed" }>;
     };
 
 type ListingState = {
@@ -66,6 +66,7 @@ type ListingState = {
 
   addListing: (listing: SignedListing) => void;
   removeListing: (id: string) => void;
+  removeListings: (ids: string[]) => void;
   clearListings: () => void;
 
   toggleSelectedListing: (id: string) => void;
@@ -143,6 +144,14 @@ export const useListingStore = create<ListingState>((set) => ({
       listings: state.listings.filter((listing) => listing.id !== id),
       selectedListingIds: state.selectedListingIds.filter(
         (selectedId) => selectedId !== id,
+      ),
+    })),
+
+  removeListings: (ids) =>
+    set((state) => ({
+      listings: state.listings.filter((listing) => !ids.includes(listing.id)),
+      selectedListingIds: state.selectedListingIds.filter(
+        (selectedId) => !ids.includes(selectedId),
       ),
     })),
 

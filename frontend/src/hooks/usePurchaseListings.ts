@@ -13,12 +13,16 @@ import { isPurchasableListing, useListingStore } from "@/stores/listingStore";
 
 export function usePurchaseListings() {
   const pendingPurchase = useListingStore((state) => state.pendingPurchase);
+
   const clearPendingPurchase = useListingStore(
     (state) => state.clearPendingPurchase,
   );
+
   const clearSelectedListings = useListingStore(
     (state) => state.clearSelectedListings,
   );
+
+  const removeListings = useListingStore((state) => state.removeListings);
 
   const singlePurchase = useWriteMscMarketV1MscPurchase();
   const batchPurchase = useWriteMscMarketV1MscBatchPurchase();
@@ -40,7 +44,7 @@ export function usePurchaseListings() {
   });
 
   const fee = feeQuery.data ?? BigInt(0);
-  const sellerReceives = totalPrice - fee;
+  const sellerReceives = totalPrice > fee ? totalPrice - fee : BigInt(0);
   const totalPayable = totalPrice;
 
   const activeHash = singlePurchase.data ?? batchPurchase.data;
@@ -88,16 +92,20 @@ export function usePurchaseListings() {
       throw new Error("Batch purchase only supports signed listings.");
     }
 
+    const batchTotalPrice = purchasableListings.reduce(
+      (total, listing) => total + listing.marketStorage.price,
+      BigInt(0),
+    );
+
     const marketStorages = purchasableListings.map(
       (listing) => listing.marketStorage,
     );
-    const signatures = purchasableListings.map(
-      (listing) => listing.signature,
-    );
+
+    const signatures = purchasableListings.map((listing) => listing.signature);
 
     await batchPurchase.writeContractAsync({
-      args: [marketStorages, signatures, totalPrice],
-      value: totalPayable,
+      args: [marketStorages, signatures, batchTotalPrice],
+      value: batchTotalPrice,
     });
   };
 
@@ -113,8 +121,11 @@ export function usePurchaseListings() {
   };
 
   const closeAfterSuccess = () => {
-    clearPendingPurchase();
+    const purchasedListingIds = listings.map((listing) => listing.id);
+
+    removeListings(purchasedListingIds);
     clearSelectedListings();
+    clearPendingPurchase();
   };
 
   return {
