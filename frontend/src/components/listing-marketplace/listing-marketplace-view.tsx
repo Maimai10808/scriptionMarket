@@ -23,6 +23,7 @@ type ListingMarketplaceViewProps = {
   table: TanstackTable<ListingRow>;
   columnsCount: number;
   selectedCount: number;
+  batchPurchaseEnabledInUi: boolean;
   onPrepareBatchPurchase: () => void;
 };
 
@@ -30,6 +31,7 @@ export function ListingMarketplaceView({
   table,
   columnsCount,
   selectedCount,
+  batchPurchaseEnabledInUi,
   onPrepareBatchPurchase,
 }: ListingMarketplaceViewProps) {
   return (
@@ -91,16 +93,20 @@ export function ListingMarketplaceView({
 
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <p className="text-sm text-zinc-500">
-            Selected listings can be used later for batch purchase.
+            {batchPurchaseEnabledInUi
+              ? "Selected listings can be used later for batch purchase."
+              : "Batch purchase is disabled by admin UI settings."}
           </p>
 
           <Button
             variant="secondary"
-            disabled={selectedCount === 0}
+            disabled={selectedCount === 0 || !batchPurchaseEnabledInUi}
             onClick={onPrepareBatchPurchase}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
-            Prepare Batch Purchase
+            {batchPurchaseEnabledInUi
+              ? "Prepare Batch Purchase"
+              : "Batch Disabled"}
           </Button>
         </div>
       </CardContent>

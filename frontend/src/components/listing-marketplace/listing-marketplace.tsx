@@ -20,6 +20,7 @@ type ListingMarketplaceProps = {
   listingsCount: number;
   selectedListingIds: string[];
   totalSelectedPrice: bigint;
+  batchPurchaseEnabledInUi: boolean;
   onToggleSelectedListing: (id: string) => void;
   onSetSelectedListingIds: (ids: string[]) => void;
   onClearSelectedListings: () => void;
@@ -33,6 +34,7 @@ export function ListingMarketplace({
   listingsCount,
   selectedListingIds,
   totalSelectedPrice,
+  batchPurchaseEnabledInUi,
   onToggleSelectedListing,
   onSetSelectedListingIds,
   onClearSelectedListings,
@@ -88,6 +90,7 @@ export function ListingMarketplace({
         table={table}
         columnsCount={columns.length}
         selectedCount={selectedListingIds.length}
+        batchPurchaseEnabledInUi={batchPurchaseEnabledInUi}
         onPrepareBatchPurchase={onPrepareBatchPurchase}
       />
     </MotionReveal>

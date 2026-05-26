@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 
+import { useAdminConsoleStore } from "@/stores/adminConsoleStore";
 import { isPurchasableListing, useListingStore } from "@/stores/listingStore";
 
 import { ListingMarketplace } from "./listing-marketplace";
@@ -27,6 +28,10 @@ export function ListingMarketplaceContainer() {
 
   const openSinglePurchase = useListingStore((state) => state.openSinglePurchase);
   const openBatchPurchase = useListingStore((state) => state.openBatchPurchase);
+
+  const batchPurchaseEnabledInUi = useAdminConsoleStore(
+    (state) => state.batchPurchaseEnabledInUi,
+  );
 
   const rows = useMemo(() => buildListingRows(listings), [listings]);
 
@@ -67,6 +72,7 @@ export function ListingMarketplaceContainer() {
   };
 
   const handlePrepareBatchPurchase = () => {
+    if (!batchPurchaseEnabledInUi) return;
     if (selectedListings.length === 0) return;
 
     openBatchPurchase(selectedListings);
@@ -78,6 +84,7 @@ export function ListingMarketplaceContainer() {
       listingsCount={listings.length}
       selectedListingIds={selectedListingIds}
       totalSelectedPrice={totalSelectedPrice}
+      batchPurchaseEnabledInUi={batchPurchaseEnabledInUi}
       onToggleSelectedListing={handleToggleSelectedListing}
       onSetSelectedListingIds={handleSetSelectedListingIds}
       onClearSelectedListings={clearSelectedListings}
