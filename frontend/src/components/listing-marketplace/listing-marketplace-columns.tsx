@@ -47,7 +47,9 @@ export function createListingMarketplaceColumns({
             checked={allSelected}
             onCheckedChange={(checked) => {
               if (checked) {
-                onSetSelectedListingIds(rows.map((row) => row.id));
+                onSetSelectedListingIds(
+                  rows.filter((row) => row.canPurchase).map((row) => row.id),
+                );
               } else {
                 onClearSelectedListings();
               }
@@ -62,6 +64,7 @@ export function createListingMarketplaceColumns({
         return (
           <Checkbox
             checked={selectedListingIds.includes(listingId)}
+            disabled={!row.original.canPurchase}
             onCheckedChange={() => onToggleSelectedListing(listingId)}
             aria-label="Select listing"
           />
@@ -115,21 +118,19 @@ export function createListingMarketplaceColumns({
       ),
     },
     {
-      accessorKey: "signatureStatus",
-      header: "Signature",
+      accessorKey: "status",
+      header: "Status",
       cell: ({ row }) => (
         <Badge
-          variant={
-            row.original.signatureStatus === "signed"
-              ? "default"
-              : "destructive"
-          }
+          variant={row.original.canPurchase ? "default" : "destructive"}
           className="gap-1"
         >
-          {row.original.signatureStatus === "signed" && (
-            <BadgeCheck className="h-3.5 w-3.5" />
-          )}
-          {row.original.signatureStatus === "signed" ? "Signed" : "Missing"}
+          {row.original.canPurchase && <BadgeCheck className="h-3.5 w-3.5" />}
+          {row.original.status === "signed"
+            ? "Signed"
+            : row.original.status === "draft"
+              ? "Draft"
+              : "Mock"}
         </Badge>
       ),
     },
@@ -141,6 +142,7 @@ export function createListingMarketplaceColumns({
           <Button
             size="sm"
             variant="secondary"
+            disabled={!row.original.canPurchase}
             onClick={() => onBuyListing(row.original.id)}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />

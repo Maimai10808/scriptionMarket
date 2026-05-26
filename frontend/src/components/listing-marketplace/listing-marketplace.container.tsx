@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { useListingStore } from "@/stores/listingStore";
+import { isPurchasableListing, useListingStore } from "@/stores/listingStore";
 
 import { ListingMarketplace } from "./listing-marketplace";
 import {
@@ -30,8 +30,28 @@ export function ListingMarketplaceContainer() {
 
   const rows = useMemo(() => buildListingRows(listings), [listings]);
 
+  const handleToggleSelectedListing = (listingId: string) => {
+    const listing = listings.find((item) => item.id === listingId);
+
+    if (!listing || !isPurchasableListing(listing)) return;
+
+    toggleSelectedListing(listingId);
+  };
+
+  const handleSetSelectedListingIds = (ids: string[]) => {
+    const purchasableIds = new Set(
+      listings.filter(isPurchasableListing).map((listing) => listing.id),
+    );
+
+    setSelectedListingIds(ids.filter((id) => purchasableIds.has(id)));
+  };
+
   const selectedListings = useMemo(() => {
-    return listings.filter((listing) => selectedListingIds.includes(listing.id));
+    return listings.filter(
+      (listing) =>
+        selectedListingIds.includes(listing.id) &&
+        isPurchasableListing(listing),
+    );
   }, [listings, selectedListingIds]);
 
   const totalSelectedPrice = useMemo(() => {
@@ -58,8 +78,8 @@ export function ListingMarketplaceContainer() {
       listingsCount={listings.length}
       selectedListingIds={selectedListingIds}
       totalSelectedPrice={totalSelectedPrice}
-      onToggleSelectedListing={toggleSelectedListing}
-      onSetSelectedListingIds={setSelectedListingIds}
+      onToggleSelectedListing={handleToggleSelectedListing}
+      onSetSelectedListingIds={handleSetSelectedListingIds}
       onClearSelectedListings={clearSelectedListings}
       onRemoveListing={removeListing}
       onBuyListing={handleBuyListing}

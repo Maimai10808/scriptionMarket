@@ -30,8 +30,6 @@ contract DeployAndUpgradeTest is StdCheats, Test {
     function testUpgradeWorks() public {
         (MscMarketV1 mscMarketV1,) = deployMscMarket.deployMarket();
         MscMarketV2Mock mscMarketV2 = new MscMarketV2Mock();
-        vm.prank(mscMarketV1.owner());
-        mscMarketV1.transferOwnership(msg.sender);
         address payable proxy = upgradeMarket.upgradeMarket(address(mscMarketV1), address(mscMarketV2));
         uint256 expectedValue = 2;
         assertEq(expectedValue, MscMarketV2Mock(proxy).getVersion());

@@ -8,23 +8,16 @@ import {DevOpsTools} from "foundry-devops/DevOpsTools.sol";
 
 contract UpgradeMarket is Script {
     function run() external returns (address) {
-        address mostRecentlyDeployedProxy = DevOpsTools
-            .get_most_recent_deployment("ERC1967Proxy", block.chainid);
+        address mostRecentlyDeployedProxy = DevOpsTools.get_most_recent_deployment("ERC1967Proxy", block.chainid);
 
         vm.startBroadcast();
         MscMarketV1 mscMarketV1 = new MscMarketV1();
         vm.stopBroadcast();
-        address proxy = upgradeMarket(
-            mostRecentlyDeployedProxy,
-            address(mscMarketV1)
-        );
+        address proxy = upgradeMarket(mostRecentlyDeployedProxy, address(mscMarketV1));
         return proxy;
     }
 
-    function upgradeMarket(
-        address proxyAddress,
-        address newMarket
-    ) public returns (address payable) {
+    function upgradeMarket(address proxyAddress, address newMarket) public returns (address payable) {
         vm.startBroadcast();
         MscMarketV1 proxy = MscMarketV1(payable(proxyAddress));
         proxy.upgradeToAndCall(payable(newMarket), "");

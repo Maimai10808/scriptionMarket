@@ -9,21 +9,14 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 contract DeployMscMarketV1 is Script {
     constructor() {}
 
-    function run()
-        external
-        returns (MscMarketV1 mscMarketV1, HelperConfig helperConfig)
-    {
+    function run() external returns (MscMarketV1 mscMarketV1, HelperConfig helperConfig) {
         (mscMarketV1, helperConfig) = deployMarket();
     }
 
-    function deployMarket()
-        public
-        returns (MscMarketV1 mscMarketV1, HelperConfig helperConfig)
-    {
+    function deployMarket() public returns (MscMarketV1 mscMarketV1, HelperConfig helperConfig) {
         helperConfig = new HelperConfig();
 
-        (uint256 deployKey, address adminAddress, uint96 feeBps) = helperConfig
-            .activeNetworkConfig();
+        (uint256 deployKey, address adminAddress, uint96 feeBps) = helperConfig.activeNetworkConfig();
 
         vm.startBroadcast(deployKey);
 
@@ -31,16 +24,9 @@ contract DeployMscMarketV1 is Script {
 
         MscMarketV1 implementation = new MscMarketV1();
 
-        bytes memory initData = abi.encodeWithSelector(
-            MscMarketV1.initialize.selector,
-            adminAddress,
-            feeBps
-        );
+        bytes memory initData = abi.encodeWithSelector(MscMarketV1.initialize.selector, adminAddress, feeBps);
 
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            initData
-        );
+        ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
 
         console.log("Implementation deployed at: %s", address(implementation));
         console.log("Proxy deployed at: %s", address(proxy));

@@ -1,5 +1,6 @@
 import { defineConfig } from "@wagmi/cli";
 import { react } from "@wagmi/cli/plugins";
+import type { Abi } from "viem";
 
 import mscMarketV1Abi from "./src/contracts/abi/MscMarketV1.json";
 import { MSC_MARKET_V1_ADDRESS } from "./src/constants/contracts";
@@ -9,7 +10,7 @@ export default defineConfig({
   contracts: [
     {
       name: "MscMarketV1",
-      abi: mscMarketV1Abi as any,
+      abi: mscMarketV1Abi as Abi,
       address: {
         // Local Anvil
         31337: MSC_MARKET_V1_ADDRESS as `0x${string}`,
@@ -19,12 +20,5 @@ export default defineConfig({
       },
     },
   ],
-  plugins: [
-    react({
-      useContractRead: true,
-      useContractWrite: true,
-      usePrepareContractWrite: true,
-      useContractEvent: true,
-    }),
-  ],
+  plugins: [react()],
 });

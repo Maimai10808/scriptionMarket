@@ -8,7 +8,8 @@ export type ListingRow = {
   priceRaw: bigint;
   seller: string;
   orderNumber: string;
-  signatureStatus: "signed" | "missing";
+  status: "draft" | "signed" | "mock";
+  canPurchase: boolean;
   createdAt: number;
   listing: SignedListing;
 };

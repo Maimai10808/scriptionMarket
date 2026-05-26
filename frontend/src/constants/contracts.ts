@@ -2,7 +2,7 @@
 // Do not edit manually.
 
 export const CONTRACT_ADDRESSES = {
-  mscMarketV1: "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707",
+  mscMarketV1: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e",
 } as const;
 
 export const MSC_MARKET_V1_ADDRESS = CONTRACT_ADDRESSES.mscMarketV1;

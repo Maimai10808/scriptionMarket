@@ -2,7 +2,6 @@
 
 import {
   flexRender,
-  type ColumnDef,
   type Table as TanstackTable,
 } from "@tanstack/react-table";
 import { ShoppingCart } from "lucide-react";

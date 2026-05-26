@@ -65,11 +65,7 @@ contract MscMarketV2Mock is
 
     receive() external payable {}
 
-    function mscPurchase(MarketStorage calldata marketStorage, bytes calldata signature)
-        external
-        payable
-        nonReentrant
-    {
+    function mscPurchase(MarketStorage calldata marketStorage, bytes calldata signature) external payable nonReentrant {
         if (!s_featureIsEnabled["buy"]) revert MscMarketV2Mock__FeatureDisabled("buy");
         if (msg.value < marketStorage.totalPrice) revert MscMarketV2Mock__PurchaseFailed();
         bytes32 hashedMessage = _hashTypedDataV4(

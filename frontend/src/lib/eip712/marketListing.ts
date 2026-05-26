@@ -3,7 +3,7 @@ import { mscMarketV1Address } from "@/generated/wagmi";
 import type { MarketStorage } from "@/stores/listingStore";
 
 export const MARKET_LISTING_TYPES = {
-  MarketStorage: [
+  Listing: [
     { name: "number", type: "uint256" },
     { name: "maker", type: "address" },
     { name: "time", type: "uint256" },
@@ -18,23 +18,33 @@ type BuildMarketListingTypedDataParams = {
   marketStorage: MarketStorage;
 };
 
-/**
- * 这里的 name / version 必须和合约里的 EIP712 初始化参数一致。
- * 如果你不确定，调用合约的 eip712Domain() 看 name 和 version。
- */
 export function buildMarketListingTypedData({
   chainId,
   marketStorage,
 }: BuildMarketListingTypedDataParams) {
+  const verifyingContract =
+    mscMarketV1Address[chainId as keyof typeof mscMarketV1Address];
+
+  if (!verifyingContract) {
+    throw new Error(`MscMarketV1 is not deployed on chain ${chainId}.`);
+  }
+
   return {
     domain: {
       name: "MscMarketV1",
-      version: "1",
+      version: "1.0",
       chainId,
-      verifyingContract: mscMarketV1Address[31337] as Address,
+      verifyingContract: verifyingContract as Address,
     },
     types: MARKET_LISTING_TYPES,
-    primaryType: "MarketStorage",
-    message: marketStorage,
+    primaryType: "Listing",
+    message: {
+      number: marketStorage.number,
+      maker: marketStorage.maker,
+      time: marketStorage.time,
+      amount: marketStorage.amount,
+      price: marketStorage.price,
+      tick: marketStorage.tick,
+    },
   } as const;
 }

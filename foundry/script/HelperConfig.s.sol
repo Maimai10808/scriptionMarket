@@ -12,10 +12,8 @@ contract HelperConfig is Script {
         uint96 feeBps;
     }
 
-    uint256 public DEFAULT_ANVIL_PRIVATE_KEY =
-        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
-    address public DEFAULT_ANVIL_ADDRESS =
-        0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+    uint256 public DEFAULT_ANVIL_PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    address public DEFAULT_ANVIL_ADDRESS = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     uint96 public DEFAULT_FEE_BPS = 2;
     NetworkConfig public activeNetworkConfig;
 
@@ -31,10 +29,7 @@ contract HelperConfig is Script {
         }
     }
 
-    function getOrCreateAnvilNetworkConfig()
-        internal
-        returns (NetworkConfig memory _anvilNetworkConfig)
-    {
+    function getOrCreateAnvilNetworkConfig() internal returns (NetworkConfig memory _anvilNetworkConfig) {
         // Check to see if we set an active network config
         if (activeNetworkConfig.deployerKey == DEFAULT_ANVIL_PRIVATE_KEY) {
             return activeNetworkConfig;
@@ -45,17 +40,11 @@ contract HelperConfig is Script {
         vm.stopBroadcast();
 
         _anvilNetworkConfig = NetworkConfig({
-            deployerKey: DEFAULT_ANVIL_PRIVATE_KEY,
-            adminAddress: DEFAULT_ANVIL_ADDRESS,
-            feeBps: DEFAULT_FEE_BPS
+            deployerKey: DEFAULT_ANVIL_PRIVATE_KEY, adminAddress: DEFAULT_ANVIL_ADDRESS, feeBps: DEFAULT_FEE_BPS
         });
     }
 
-    function getMxcTestNetworkConfig()
-        internal
-        view
-        returns (NetworkConfig memory _mxcTestNetworkConfig)
-    {
+    function getMxcTestNetworkConfig() internal view returns (NetworkConfig memory _mxcTestNetworkConfig) {
         _mxcTestNetworkConfig = NetworkConfig({
             deployerKey: vm.envUint("TESTNETWORK_PRIVATE_KEY"),
             adminAddress: vm.envAddress("TESTNETWORK_ADMIN_ADDRESS"),
@@ -63,11 +52,7 @@ contract HelperConfig is Script {
         });
     }
 
-    function getMxcMainNetworkConfig()
-        internal
-        view
-        returns (NetworkConfig memory _mxcMainNetworkConfig)
-    {
+    function getMxcMainNetworkConfig() internal view returns (NetworkConfig memory _mxcMainNetworkConfig) {
         _mxcMainNetworkConfig = NetworkConfig({
             deployerKey: vm.envUint("MAINNETWORK_PRIVATE_KEY"),
             adminAddress: vm.envAddress("MAINNETWORK_ADMIN_ADDRESS"),

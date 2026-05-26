@@ -9,7 +9,7 @@ import {
   useWriteMscMarketV1MscBatchPurchase,
   useWriteMscMarketV1MscPurchase,
 } from "@/generated/wagmi";
-import { useListingStore } from "@/stores/listingStore";
+import { isPurchasableListing, useListingStore } from "@/stores/listingStore";
 
 export function usePurchaseListings() {
   const pendingPurchase = useListingStore((state) => state.pendingPurchase);
@@ -40,7 +40,8 @@ export function usePurchaseListings() {
   });
 
   const fee = feeQuery.data ?? BigInt(0);
-  const totalPayable = totalPrice + fee;
+  const sellerReceives = totalPrice - fee;
+  const totalPayable = totalPrice;
 
   const activeHash = singlePurchase.data ?? batchPurchase.data;
 
@@ -66,6 +67,10 @@ export function usePurchaseListings() {
 
     const listing = pendingPurchase.listings[0];
 
+    if (!isPurchasableListing(listing)) {
+      throw new Error("Only signed listings can be purchased.");
+    }
+
     await singlePurchase.writeContractAsync({
       args: [listing.marketStorage, listing.signature],
       value: totalPayable,
@@ -75,10 +80,18 @@ export function usePurchaseListings() {
   const purchaseBatch = async () => {
     if (!pendingPurchase || pendingPurchase.type !== "batch") return;
 
-    const marketStorages = pendingPurchase.listings.map(
+    const purchasableListings = pendingPurchase.listings.filter(
+      isPurchasableListing,
+    );
+
+    if (purchasableListings.length !== pendingPurchase.listings.length) {
+      throw new Error("Batch purchase only supports signed listings.");
+    }
+
+    const marketStorages = purchasableListings.map(
       (listing) => listing.marketStorage,
     );
-    const signatures = pendingPurchase.listings.map(
+    const signatures = purchasableListings.map(
       (listing) => listing.signature,
     );
 
@@ -110,6 +123,7 @@ export function usePurchaseListings() {
 
     totalPrice,
     fee,
+    sellerReceives,
     totalPayable,
 
     transactionHash: activeHash,

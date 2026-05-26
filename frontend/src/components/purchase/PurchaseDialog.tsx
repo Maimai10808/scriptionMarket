@@ -30,6 +30,7 @@ export function PurchaseDialog() {
     listings,
     totalPrice,
     fee,
+    sellerReceives,
     totalPayable,
     transactionHash,
     isFeeLoading,
@@ -86,7 +87,7 @@ export function PurchaseDialog() {
           </Alert>
         )}
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-4">
           <PurchaseMetric
             label="Goods Price"
             value={`${formatEther(totalPrice)} ETH`}
@@ -96,7 +97,11 @@ export function PurchaseDialog() {
             value={isFeeLoading ? "Loading..." : `${formatEther(fee)} ETH`}
           />
           <PurchaseMetric
-            label="Total Payable"
+            label="Seller Receives"
+            value={`${formatEther(sellerReceives)} ETH`}
+          />
+          <PurchaseMetric
+            label="Buyer Pays"
             value={`${formatEther(totalPayable)} ETH`}
           />
         </div>

@@ -10,12 +10,21 @@ export type MarketStorage = {
   tick: string;
 };
 
+export type ListingStatus = "draft" | "signed" | "mock";
+
 export type SignedListing = {
   id: string;
   marketStorage: MarketStorage;
-  signature: Hex;
+  signature?: Hex;
+  status: ListingStatus;
   createdAt: number;
 };
+
+export function isPurchasableListing(
+  listing: SignedListing,
+): listing is SignedListing & { signature: Hex; status: "signed" } {
+  return listing.status === "signed" && Boolean(listing.signature);
+}
 
 export type PendingListingDraft = {
   tick: string;
@@ -90,23 +99,31 @@ export const useListingStore = create<ListingState>((set) => ({
       isConfirmDialogOpen: false,
     }),
 
-  openSinglePurchase: (listing) =>
+  openSinglePurchase: (listing) => {
+    if (!isPurchasableListing(listing)) return;
+
     set({
       pendingPurchase: {
         type: "single",
         listings: [listing],
       },
       isPurchaseDialogOpen: true,
-    }),
+    });
+  },
 
-  openBatchPurchase: (listings) =>
+  openBatchPurchase: (listings) => {
+    const signedListings = listings.filter(isPurchasableListing);
+
+    if (signedListings.length === 0) return;
+
     set({
       pendingPurchase: {
         type: "batch",
-        listings,
+        listings: signedListings,
       },
       isPurchaseDialogOpen: true,
-    }),
+    });
+  },
 
   closePurchaseDialog: () => set({ isPurchaseDialogOpen: false }),
 

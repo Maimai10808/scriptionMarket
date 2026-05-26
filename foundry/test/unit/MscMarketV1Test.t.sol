@@ -6,6 +6,8 @@ import {Vm} from "forge-std/Vm.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {DeployMscMarketV1} from "../../script/DeployMscMarketV1.s.sol";
 import {MscMarketV1} from "../../src/MscMarketV1.sol";
+import {MscMarketErrors} from "../../src/abstract/MscMarketErrors.sol";
+import {MscMarketStorage} from "../../src/abstract/MscMarketStorage.sol";
 import {SigUtils} from "../utils/SigUtils.sol";
 
 contract MscMarketV1Test is Test {
@@ -130,7 +132,7 @@ contract MscMarketV1Test is Test {
     function testMscWithdraw_ShouldReverts_WhenFeatureIsNotEnabled() public {
         vm.startPrank(adminAddress);
         mscMarketV1.setFeatureStatus("withdraw", false);
-        vm.expectRevert(abi.encodeWithSelector(MscMarketV1.MscMarketV1__FeatureDisabled.selector, "withdraw"));
+        vm.expectRevert(abi.encodeWithSelector(MscMarketErrors.MscMarketV1__FeatureDisabled.selector, "withdraw"));
         mscMarketV1.mscWithdraw();
         vm.stopPrank();
     }
@@ -150,7 +152,7 @@ contract MscMarketV1Test is Test {
         bytes memory mockSignature = sigUtils.mockSignature(_seller, _sellerKey);
         vm.startPrank(adminAddress);
         mscMarketV1.setFeatureStatus("buy", false);
-        MscMarketV1.MarketStorage memory marketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory marketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _seller,
             time: block.timestamp,
@@ -158,7 +160,7 @@ contract MscMarketV1Test is Test {
             price: MOCK_ORDER_PRICE_10ether,
             tick: MOCK_TICK
         });
-        vm.expectRevert(abi.encodeWithSelector(MscMarketV1.MscMarketV1__FeatureDisabled.selector, "buy"));
+        vm.expectRevert(abi.encodeWithSelector(MscMarketErrors.MscMarketV1__FeatureDisabled.selector, "buy"));
         mscMarketV1.mscPurchase(marketStorage, mockSignature);
         vm.stopPrank();
     }
@@ -167,7 +169,7 @@ contract MscMarketV1Test is Test {
         (address _seller, uint256 _sellerKey) = makeAddrAndKey("seller");
         bytes memory mockSignature = sigUtils.mockSignature(_seller, _sellerKey);
         address _buyer = vm.addr(2);
-        MscMarketV1.MarketStorage memory marketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory marketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _seller,
             time: block.timestamp,
@@ -177,7 +179,7 @@ contract MscMarketV1Test is Test {
         });
         vm.deal(_buyer, STARTING_BALANCE_100ether);
         vm.startPrank(_buyer);
-        vm.expectRevert(MscMarketV1.MscMarketV1__PurchaseFailed.selector);
+        vm.expectRevert(MscMarketErrors.MscMarketV1__PurchaseFailed.selector);
         mscMarketV1.mscPurchase{value: MOCK_ORDER_PRICE_10ether}(marketStorage, mockSignature);
         vm.stopPrank();
     }
@@ -187,7 +189,7 @@ contract MscMarketV1Test is Test {
         bytes memory mockSignature = sigUtils.mockSignature(_seller, _sellerKey);
         (address _invalidSeller,) = makeAddrAndKey("invalidSeller");
         address _buyer = vm.addr(2);
-        MscMarketV1.MarketStorage memory marketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory marketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _invalidSeller,
             time: block.timestamp,
@@ -197,7 +199,7 @@ contract MscMarketV1Test is Test {
         });
         vm.deal(_buyer, STARTING_BALANCE_100ether);
         vm.startPrank(_buyer);
-        vm.expectRevert(MscMarketV1.MscMarketV1__InvalidSignature.selector);
+        vm.expectRevert(MscMarketErrors.MscMarketV1__InvalidSignature.selector);
         mscMarketV1.mscPurchase{value: MOCK_ORDER_PRICE_100ether}(marketStorage, mockSignature);
         vm.stopPrank();
     }
@@ -212,7 +214,7 @@ contract MscMarketV1Test is Test {
         (address _seller, uint256 _sellerKey) = makeAddrAndKey("seller");
         bytes memory mockSignature = sigUtils.mockSignature(_seller, _sellerKey);
         (address _buyer,) = makeAddrAndKey("buyer");
-        MscMarketV1.MarketStorage memory marketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory marketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _seller,
             time: block.timestamp,
@@ -234,7 +236,7 @@ contract MscMarketV1Test is Test {
         (address _buyer,) = makeAddrAndKey("buyer");
         (address _buyer2,) = makeAddrAndKey("buyer2");
         console.log(block.timestamp);
-        MscMarketV1.MarketStorage memory marketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory marketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _seller,
             time: block.timestamp,
@@ -250,7 +252,7 @@ contract MscMarketV1Test is Test {
         vm.stopPrank();
         vm.deal(_buyer2, STARTING_BALANCE_100ether);
         vm.startPrank(_buyer2);
-        vm.expectRevert(MscMarketV1.MscMarketV1__OrderIsProcessing.selector);
+        vm.expectRevert(MscMarketErrors.MscMarketV1__OrderIsProcessing.selector);
         mscMarketV1.mscPurchase{value: STARTING_BALANCE_100ether}(marketStorage, mockSignature);
         vm.stopPrank();
     }
@@ -260,9 +262,9 @@ contract MscMarketV1Test is Test {
         bytes memory mockSignature = sigUtils.mockSignature(_seller, _sellerKey);
         vm.startPrank(adminAddress);
         mscMarketV1.setFeatureStatus("buy", false);
-        MscMarketV1.MarketStorage[] memory marketStorages = new MscMarketV1.MarketStorage[](1);
+        MscMarketStorage.MarketStorage[] memory marketStorages = new MscMarketStorage.MarketStorage[](1);
         bytes[] memory signatures = new bytes[](1);
-        MscMarketV1.MarketStorage memory marketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory marketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _seller,
             time: block.timestamp,
@@ -272,7 +274,7 @@ contract MscMarketV1Test is Test {
         });
         marketStorages[0] = marketStorage;
         signatures[0] = mockSignature;
-        vm.expectRevert(abi.encodeWithSelector(MscMarketV1.MscMarketV1__FeatureDisabled.selector, "buy"));
+        vm.expectRevert(abi.encodeWithSelector(MscMarketErrors.MscMarketV1__FeatureDisabled.selector, "buy"));
         mscMarketV1.mscBatchPurchase(marketStorages, signatures, 100);
         vm.stopPrank();
     }
@@ -281,9 +283,9 @@ contract MscMarketV1Test is Test {
         (address _seller, uint256 _sellerKey) = makeAddrAndKey("seller");
         bytes memory mockSignature = sigUtils.mockSignature(_seller, _sellerKey);
         address _buyer = vm.addr(2);
-        MscMarketV1.MarketStorage[] memory marketStorages = new MscMarketV1.MarketStorage[](1);
+        MscMarketStorage.MarketStorage[] memory marketStorages = new MscMarketStorage.MarketStorage[](1);
         bytes[] memory signatures = new bytes[](1);
-        MscMarketV1.MarketStorage memory marketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory marketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _seller,
             time: block.timestamp,
@@ -295,7 +297,7 @@ contract MscMarketV1Test is Test {
         signatures[0] = mockSignature;
         vm.deal(_buyer, STARTING_BALANCE_100ether);
         vm.startPrank(_buyer);
-        vm.expectRevert(MscMarketV1.MscMarketV1__PurchaseFailed.selector);
+        vm.expectRevert(MscMarketErrors.MscMarketV1__PurchaseFailed.selector);
         mscMarketV1.mscBatchPurchase{value: MOCK_ORDER_PRICE_10ether}(
             marketStorages, signatures, MOCK_ORDER_PRICE_100ether
         );
@@ -306,9 +308,9 @@ contract MscMarketV1Test is Test {
         (address _seller, uint256 _sellerKey) = makeAddrAndKey("seller");
         bytes memory mockSignature = sigUtils.mockSignature(_seller, _sellerKey);
         address _buyer = vm.addr(2);
-        MscMarketV1.MarketStorage[] memory marketStorages = new MscMarketV1.MarketStorage[](1);
+        MscMarketStorage.MarketStorage[] memory marketStorages = new MscMarketStorage.MarketStorage[](1);
         bytes[] memory signatures = new bytes[](2);
-        MscMarketV1.MarketStorage memory marketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory marketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _seller,
             time: block.timestamp,
@@ -320,7 +322,7 @@ contract MscMarketV1Test is Test {
         signatures[0] = mockSignature;
         vm.deal(_buyer, STARTING_BALANCE_100ether);
         vm.startPrank(_buyer);
-        vm.expectRevert(MscMarketV1.MscMarketV1__LengthNotEqual.selector);
+        vm.expectRevert(MscMarketErrors.MscMarketV1__LengthNotEqual.selector);
         mscMarketV1.mscBatchPurchase{value: MOCK_ORDER_PRICE_10ether}(
             marketStorages, signatures, MOCK_ORDER_PRICE_10ether
         );
@@ -332,9 +334,9 @@ contract MscMarketV1Test is Test {
         (address _invalidSeller,) = makeAddrAndKey("invalidSeller");
         bytes memory mockSignature = sigUtils.mockSignature(_seller, _sellerKey);
         address _buyer = vm.addr(2);
-        MscMarketV1.MarketStorage[] memory marketStorages = new MscMarketV1.MarketStorage[](3);
+        MscMarketStorage.MarketStorage[] memory marketStorages = new MscMarketStorage.MarketStorage[](3);
         bytes[] memory signatures = new bytes[](3);
-        MscMarketV1.MarketStorage memory marketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory marketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _seller,
             time: block.timestamp,
@@ -342,7 +344,7 @@ contract MscMarketV1Test is Test {
             price: MOCK_ORDER_PRICE_10ether,
             tick: MOCK_TICK
         });
-        MscMarketV1.MarketStorage memory invalidMarketStorage = MscMarketV1.MarketStorage({
+        MscMarketStorage.MarketStorage memory invalidMarketStorage = MscMarketStorage.MarketStorage({
             number: MOCK_ORDER_NUMBER_1,
             maker: _invalidSeller,
             time: block.timestamp,
@@ -359,15 +361,15 @@ contract MscMarketV1Test is Test {
         vm.deal(_buyer, STARTING_BALANCE_100ether);
         vm.startPrank(_buyer);
         mscMarketV1.mscBatchPurchase{value: MOCK_ORDER_PRICE_100ether}(
-            marketStorages, signatures, MOCK_ORDER_PRICE_10ether
+            marketStorages, signatures, MOCK_ORDER_PRICE_10ether * 3
         );
         vm.stopPrank();
-        assert(mscMarketV1.getOrderStatus(_seller, MOCK_ORDER_NUMBER_1) == MscMarketV1.OrderStatus.Sold);
-        assert(mscMarketV1.getOrderStatus(_invalidSeller, MOCK_ORDER_NUMBER_1) == MscMarketV1.OrderStatus.Listing);
+        assert(mscMarketV1.getOrderStatus(_seller, MOCK_ORDER_NUMBER_1) == MscMarketStorage.OrderStatus.Sold);
+        assert(mscMarketV1.getOrderStatus(_invalidSeller, MOCK_ORDER_NUMBER_1) == MscMarketStorage.OrderStatus.Listing);
     }
 
     function testGetOrderStatus_ShouldGetsCorrectly_WhenItConfigured() public view {
         address _seller = vm.addr(1);
-        assert(mscMarketV1.getOrderStatus(_seller, MOCK_ORDER_NUMBER_1) == MscMarketV1.OrderStatus.Listing);
+        assert(mscMarketV1.getOrderStatus(_seller, MOCK_ORDER_NUMBER_1) == MscMarketStorage.OrderStatus.Listing);
     }
 }

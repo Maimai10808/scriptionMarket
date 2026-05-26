@@ -71,6 +71,7 @@ export function useCreateListing() {
       id: `${marketStorage.maker}-${marketStorage.number.toString()}`,
       marketStorage,
       signature,
+      status: "signed",
       createdAt: Date.now(),
     };
 

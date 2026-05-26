@@ -1,6 +1,6 @@
 import { formatEther } from "viem";
 
-import type { SignedListing } from "@/stores/listingStore";
+import { isPurchasableListing, type SignedListing } from "@/stores/listingStore";
 import type { ListingRow } from "./listing-marketplace.types";
 
 export function shortenAddress(address: string) {
@@ -16,7 +16,8 @@ export function buildListingRows(listings: SignedListing[]): ListingRow[] {
     priceRaw: listing.marketStorage.price,
     seller: listing.marketStorage.maker,
     orderNumber: listing.marketStorage.number.toString(),
-    signatureStatus: listing.signature ? "signed" : "missing",
+    status: listing.status,
+    canPurchase: isPurchasableListing(listing),
     createdAt: listing.createdAt,
     listing,
   }));

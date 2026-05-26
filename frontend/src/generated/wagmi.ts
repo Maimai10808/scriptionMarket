@@ -384,7 +384,7 @@ export const mscMarketV1Abi = [
  *
  */
 export const mscMarketV1Address = {
-  31337: '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707',
+  31337: '0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e',
 } as const
 
 /**
