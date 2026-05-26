@@ -1,25 +1,22 @@
 -include .env
 
-.PHONY: all test clean deploy fund help install snapshot format anvil scopefile
+.PHONY: all test clean deploy fund help install snapshot format anvil scopefile upgrade
 
 DEFAULT_ANVIL_KEY := 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
 all: remove install build
 
-# Clean the repo
 clean  :; forge clean
 
-# Remove modules
 remove :; rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules && git add . && git commit -m "modules"
 
-install :; forge install foundry-rs/forge-std --no-commit && forge install openzeppelin/openzeppelin-contracts --no-commit && forge install openzeppelin/openzeppelin-contracts-upgradeable --no-commit 
+install :; forge install foundry-rs/forge-std --no-git && forge install OpenZeppelin/openzeppelin-contracts@v5.0.2 --no-git && forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.2 --no-git && forge install Cyfrin/foundry-devops --no-git
 
-# Update Dependencies
 update:; forge update
 
 build:; forge build
 
-test :; forge test 
+test :; forge test
 
 snapshot :; forge snapshot
 
@@ -32,14 +29,13 @@ NETWORK_ARGS := --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KE
 ifeq ($(findstring --network wannsee,$(ARGS)),--network wannsee)
 	NETWORK_ARGS := --rpc-url $(WANNSEE_RPC_URL) --private-key $(TESTNETWORK_PRIVATE_KEY) --broadcast -vvvvv
 endif
+
 ifeq ($(findstring --network mainnet,$(ARGS)),--network mainnet)
 	NETWORK_ARGS := --rpc-url $(MXC_MAIN_RPC_URL) --private-key $(MAINNETWORK_PRIVATE_KEY) --broadcast -vvvvv
 endif
 
 deploy:
 	@forge script script/DeployMscMarketV1.s.sol:DeployMscMarketV1 $(NETWORK_ARGS)
-	@cd ../web && npm run sync:contracts
 
 upgrade:
 	@forge script script/UpgradeMarket.s.sol:UpgradeMarket $(NETWORK_ARGS)
-	@cd ../web && npm run sync:contracts

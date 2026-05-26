@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Script} from "forge-std/Script.sol";
 import {MscMarketV1} from "../src/MscMarketV1.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {DevOpsTools} from "lib/foundry-devops/src/DevOpsTools.sol";
+import {DevOpsTools} from "foundry-devops/DevOpsTools.sol";
 
 contract UpgradeMarket is Script {
     function run() external returns (address) {
