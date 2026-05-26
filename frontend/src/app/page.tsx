@@ -1,13 +1,20 @@
+import { ProtocolStatus } from "@/components/ProtocolStatus";
 import { CreateListingForm } from "@/components/CreateListingForm";
 import { ListingMarketplace } from "@/components/listing-marketplace";
-import { ProtocolStatus } from "@/components/ProtocolStatus";
+import { PurchaseDialog } from "@/components/purchase/PurchaseDialog";
+import { TradeEventsPanel } from "@/components/purchase/TradeEventsPanel";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <>
-      <ProtocolStatus />
-      <CreateListingForm />
-      <ListingMarketplace />
-    </>
+    <main className="min-h-screen bg-black px-6 py-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <ProtocolStatus />
+        <CreateListingForm />
+        <ListingMarketplace />
+        <TradeEventsPanel />
+      </div>
+
+      <PurchaseDialog />
+    </main>
   );
 }

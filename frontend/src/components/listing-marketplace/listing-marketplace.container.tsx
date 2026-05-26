@@ -25,6 +25,9 @@ export function ListingMarketplaceContainer() {
   );
   const removeListing = useListingStore((state) => state.removeListing);
 
+  const openSinglePurchase = useListingStore((state) => state.openSinglePurchase);
+  const openBatchPurchase = useListingStore((state) => state.openBatchPurchase);
+
   const rows = useMemo(() => buildListingRows(listings), [listings]);
 
   const selectedListings = useMemo(() => {
@@ -40,11 +43,13 @@ export function ListingMarketplaceContainer() {
 
     if (!listing) return;
 
-    console.log("Buy listing:", listing);
+    openSinglePurchase(listing);
   };
 
   const handlePrepareBatchPurchase = () => {
-    console.log("Selected listings:", selectedListings);
+    if (selectedListings.length === 0) return;
+
+    openBatchPurchase(selectedListings);
   };
 
   return (
